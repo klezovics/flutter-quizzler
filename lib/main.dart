@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:quizzler/quiz_brain.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 
 void main() => runApp(Quizzler());
 
@@ -25,10 +27,23 @@ class QuizPage extends StatefulWidget {
 }
 
 class _QuizPageState extends State<QuizPage> {
-  List<Widget> scoreKeeper = [
-    Icon(Icons.check, color: Colors.green),
-    Icon(Icons.close, color: Colors.red),
-  ];
+  List<Widget> scoreKeeper = [];
+  /*
+question1: 'You can lead a cow down stairs but not up stairs.', false,
+question2: 'Approximately one quarter of human bones are in the feet.', true,
+question3: 'A slug\'s blood is green.', true,
+*/
+  var quizBrain = QuizBrain();
+
+  void checkAnswer(bool userPickedAnswer) {
+    var correctAnswer = quizBrain.getQuestionAnswer();
+    if (correctAnswer == userPickedAnswer) {
+      scoreKeeper.add(Icon(Icons.check, color: Colors.green));
+    } else {
+      scoreKeeper.add(Icon(Icons.cancel, color: Colors.red));
+    }
+    quizBrain.nextQuestion();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +57,7 @@ class _QuizPageState extends State<QuizPage> {
             padding: EdgeInsets.all(10.0),
             child: Center(
               child: Text(
-                'This is where the question text will go.',
+                quizBrain.getQuestionText(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 25.0,
@@ -66,6 +81,14 @@ class _QuizPageState extends State<QuizPage> {
                 ),
               ),
               onPressed: () {
+                setState(() {
+                  checkAnswer(true);
+                  if (quizBrain.isFinished()) {
+                    raiseAlert(context);
+                    scoreKeeper = [];
+                    quizBrain.reset();
+                  }
+                });
                 //The user picked true.
               },
             ),
@@ -85,8 +108,12 @@ class _QuizPageState extends State<QuizPage> {
               ),
               onPressed: () {
                 setState(() {
-                  scoreKeeper.add(Icon(Icons.check, color: Colors.green));
-                  print(scoreKeeper.toString());
+                  if (quizBrain.isFinished()) {
+                    raiseAlert(context);
+                    scoreKeeper = [];
+                    quizBrain.reset();
+                  }
+                  checkAnswer(false);
                 });
               },
             ),
@@ -97,6 +124,14 @@ class _QuizPageState extends State<QuizPage> {
         )
       ],
     );
+  }
+
+  void raiseAlert(BuildContext context) {
+    Alert(
+      context: context,
+      title: "Finished!",
+      desc: "Want to play again ?",
+    ).show();
   }
 }
 
